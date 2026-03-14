@@ -72,6 +72,9 @@ def limpar_dados(df: pd.DataFrame) -> pd.DataFrame:
     df["nd_descricao"]       = df["nd_descricao"].astype(str).str.strip()
     df["subitem_descricao"]  = df["subitem_descricao"].astype(str).str.strip()
 
+    # Remove linhas com empenhado e liquidado ambos zerados
+    df = df[~((df["valor_empenhado"] == 0) & (df["valor_liquidado"] == 0))]
+
     return df
 
 
