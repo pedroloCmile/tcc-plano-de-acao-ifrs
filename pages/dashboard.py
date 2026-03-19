@@ -33,8 +33,6 @@ if df.empty:
 # ── Bloco 1 — Resumo Geral ────────────────────────────────────────────────────
 
 st.markdown("## Resumo Geral")
-st.write(df[["valor_empenhado", "valor_liquidado"]].head(10))
-st.write(df["valor_empenhado"].sum())
 
 resumo = calcular_resumo_geral(df, ANO)
 

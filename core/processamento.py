@@ -102,17 +102,21 @@ def classificar_despesas(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def processar_relatorio(arquivo) -> tuple[pd.DataFrame, pd.DataFrame]:
+def processar_relatorio(arquivo, mes: str, ano: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Função principal — executa todo o pipeline de processamento.
     Retorna dois DataFrames:
       - df_completo: todas as linhas classificadas
       - df_nao_mapeado: apenas as linhas que não encontraram correspondência
     """
-    df_bruto       = ler_relatorio(arquivo)
-    df_dados       = identificar_linhas_dados(df_bruto)
-    df_limpo       = limpar_dados(df_dados)
+    df_bruto        = ler_relatorio(arquivo)
+    df_dados        = identificar_linhas_dados(df_bruto)
+    df_limpo        = limpar_dados(df_dados)
     df_classificado = classificar_despesas(df_limpo)
+
+    # Adiciona mês e ano como colunas
+    df_classificado["mes"] = mes
+    df_classificado["ano"] = ano
 
     df_nao_mapeado = df_classificado[df_classificado["objetivo"] == "Não mapeado"].copy()
 

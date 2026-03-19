@@ -41,9 +41,10 @@ if arquivo:
     if st.button("Processar e salvar", type="primary"):
         with st.spinner("Processando o relatório..."):
             try:
-                df_completo, df_nao_mapeado = processar_relatorio(arquivo)
+                df_completo, df_nao_mapeado = processar_relatorio(arquivo, mes, ano)
 
-                salvar_dados_processados(df_completo)
+                salvar_dados_processados(df_completo, mes, ano)
+
                 salvar_log_upload(
                     nome_arquivo=arquivo.name,
                     mes=mes,

@@ -38,21 +38,41 @@ def conectar() -> gspread.Spreadsheet:
 
 # ── Escrita ───────────────────────────────────────────────────────────────────
 
-def salvar_dados_processados(df: pd.DataFrame) -> None:
+def salvar_dados_processados(df: pd.DataFrame, mes: str, ano: int) -> None:
     """
-    Salva o DataFrame processado na aba dados_processados.
-    Substitui os dados existentes a cada novo upload.
+    Acumula os dados processados na aba dados_processados.
+    Remove registros do mesmo mês/ano antes de inserir os novos
+    para evitar duplicatas em caso de reenvio.
     """
     sh  = conectar()
     aba = sh.worksheet(ABA_DADOS)
-    aba.clear()
 
-    # Converte floats para string com ponto decimal explícito
+    # Carrega dados existentes
+    dados_existentes = aba.get_all_records()
+
+    if dados_existentes:
+        df_existente = pd.DataFrame(dados_existentes)
+        # Remove registros do mesmo mês e ano para evitar duplicata
+        df_existente = df_existente[
+            ~((df_existente["mes"] == mes) & (df_existente["ano"].astype(str) == str(ano)))
+        ]
+    else:
+        df_existente = pd.DataFrame()
+
+    # Prepara novo df para salvar
     df_export = df.copy()
     df_export["valor_empenhado"] = df_export["valor_empenhado"].apply(lambda x: str(round(float(x), 2)))
     df_export["valor_liquidado"] = df_export["valor_liquidado"].apply(lambda x: str(round(float(x), 2)))
 
-    aba.update([df_export.columns.tolist()] + df_export.values.tolist())
+    # Combina existente com novo
+    if not df_existente.empty:
+        df_final = pd.concat([df_existente, df_export], ignore_index=True)
+    else:
+        df_final = df_export
+
+    # Reescreve tudo
+    aba.clear()
+    aba.update([df_final.columns.tolist()] + df_final.values.tolist())
 
 def salvar_log_upload(nome_arquivo: str, mes: str, ano: int, total_linhas: int, nao_mapeadas: int) -> None:
     """
