@@ -49,26 +49,29 @@ def salvar_dados_processados(df: pd.DataFrame, mes: str, ano: int) -> None:
 
     # Carrega dados existentes
     dados_existentes = aba.get_all_records()
-
-    if dados_existentes:
-        df_existente = pd.DataFrame(dados_existentes)
-        # Remove registros do mesmo mês e ano para evitar duplicata
-        df_existente = df_existente[
-            ~((df_existente["mes"] == mes) & (df_existente["ano"].astype(str) == str(ano)))
-        ]
-    else:
-        df_existente = pd.DataFrame()
+    print(f"Linhas existentes: {len(dados_existentes)}")
 
     # Prepara novo df para salvar
     df_export = df.copy()
     df_export["valor_empenhado"] = df_export["valor_empenhado"].apply(lambda x: str(round(float(x), 2)))
     df_export["valor_liquidado"] = df_export["valor_liquidado"].apply(lambda x: str(round(float(x), 2)))
 
-    # Combina existente com novo
-    if not df_existente.empty:
+    if dados_existentes:
+        df_existente = pd.DataFrame(dados_existentes)
+        print(f"Meses existentes: {df_existente['mes'].unique() if 'mes' in df_existente.columns else 'sem coluna mes'}")
+
+        # Remove registros do mesmo mês e ano para evitar duplicata
+        df_existente = df_existente[
+            ~((df_existente["mes"] == mes) & (df_existente["ano"].astype(str) == str(ano)))
+        ]
+        print(f"Linhas após remover {mes}/{ano}: {len(df_existente)}")
+
         df_final = pd.concat([df_existente, df_export], ignore_index=True)
     else:
+        print("Sheets vazio — primeiro upload")
         df_final = df_export
+
+    print(f"Total final a salvar: {len(df_final)}")
 
     # Reescreve tudo
     aba.clear()
@@ -104,14 +107,14 @@ def carregar_dados_processados() -> pd.DataFrame:
     """
     sh    = conectar()
     aba   = sh.worksheet(ABA_DADOS)
-    dados = aba.get_all_records()
+    dados = aba.get_all_records(value_render_option="UNFORMATTED_VALUE")
 
     if not dados:
         return pd.DataFrame()
 
     df = pd.DataFrame(dados)
-    df["valor_empenhado"] = pd.to_numeric(df["valor_empenhado"].astype(str).str.replace(",", "."), errors="coerce").fillna(0)
-    df["valor_liquidado"] = pd.to_numeric(df["valor_liquidado"].astype(str).str.replace(",", "."), errors="coerce").fillna(0)
+    df["valor_empenhado"] = pd.to_numeric(df["valor_empenhado"], errors="coerce").fillna(0)
+    df["valor_liquidado"] = pd.to_numeric(df["valor_liquidado"], errors="coerce").fillna(0)
 
     return df
 

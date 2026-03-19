@@ -121,3 +121,4 @@ def processar_relatorio(arquivo, mes: str, ano: int) -> tuple[pd.DataFrame, pd.D
     df_nao_mapeado = df_classificado[df_classificado["objetivo"] == "Não mapeado"].copy()
 
     return df_classificado, df_nao_mapeado
+

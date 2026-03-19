@@ -30,6 +30,26 @@ if df.empty:
     st.warning("Nenhum dado encontrado. Envie o relatório mensal pela tela de **Upload**.")
     st.stop()
 
+
+# ── Filtro de mês e ano ───────────────────────────────────────────────────────
+
+meses_disponiveis = df[["ano", "mes"]].drop_duplicates().sort_values(["ano", "mes"])
+opcoes = [f"{row['mes']}/{row['ano']}" for _, row in meses_disponiveis.iterrows()]
+
+if not opcoes:
+    st.warning("Nenhum dado encontrado.")
+    st.stop()
+
+col1, col2 = st.columns([2, 6])
+with col1:
+    selecao = st.selectbox("Mês de referência", opcoes)
+
+mes_sel, ano_sel = selecao.split("/")
+ano_sel = int(ano_sel)
+
+# Filtra o DataFrame pelo mês selecionado
+df = df[(df["mes"] == mes_sel) & (df["ano"] == ano_sel)]
+
 # ── Bloco 1 — Resumo Geral ────────────────────────────────────────────────────
 
 st.markdown("## Resumo Geral")
@@ -183,3 +203,94 @@ st.markdown("## Dados Completos")
 
 with st.expander("Ver todos os registros classificados"):
     st.dataframe(df, use_container_width=True, hide_index=True)
+
+# ── Bloco 7 — Comparativo Mensal ──────────────────────────────────────────────
+
+st.markdown("---")
+st.markdown("## Comparativo Mensal")
+
+# Carrega todos os dados sem filtro de mês
+df_historico = carregar_dados_processados()
+
+if df_historico.empty or "mes" not in df_historico.columns:
+    st.info("Nenhum histórico disponível ainda.")
+else:
+    # Ordem dos meses
+    ordem_meses = [
+        "Janeiro", "Fevereiro", "Março", "Abril",
+        "Maio", "Junho", "Julho", "Agosto",
+        "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+
+    # Agrupa por mês e ano
+    df_comp = df_historico.groupby(["ano", "mes"]).agg(
+        total_empenhado=("valor_empenhado", "sum"),
+        total_liquidado=("valor_liquidado", "sum"),
+    ).reset_index()
+
+    # Ordena por mês corretamente
+    df_comp["mes_ordem"] = df_comp["mes"].apply(
+        lambda x: ordem_meses.index(x) if x in ordem_meses else 99
+    )
+    df_comp = df_comp.sort_values(["ano", "mes_ordem"])
+    df_comp["mes_ano"] = df_comp["mes"] + "/" + df_comp["ano"].astype(str)
+
+    # ── Gráfico de linha ──────────────────────────────────────────────────────
+    st.markdown("### Evolução do Total Empenhado")
+
+    fig_linha = px.line(
+        df_comp,
+        x="mes_ano",
+        y="total_empenhado",
+        markers=True,
+        labels={
+            "mes_ano":        "Mês/Ano",
+            "total_empenhado": "Total Empenhado (R$)",
+        },
+        color_discrete_sequence=["#2e75b6"],
+    )
+    fig_linha.update_layout(height=350, xaxis_title="Mês", yaxis_title="Total Empenhado (R$)")
+    st.plotly_chart(fig_linha, use_container_width=True)
+
+    # ── Gráfico de barras agrupadas ───────────────────────────────────────────
+    st.markdown("### Empenhado vs Liquidado por Mês")
+
+    fig_barras = go.Figure()
+
+    fig_barras.add_trace(go.Bar(
+        name="Empenhado",
+        x=df_comp["mes_ano"],
+        y=df_comp["total_empenhado"],
+        marker_color="#2e75b6",
+    ))
+
+    fig_barras.add_trace(go.Bar(
+        name="Liquidado",
+        x=df_comp["mes_ano"],
+        y=df_comp["total_liquidado"],
+        marker_color="#1a4a7a",
+    ))
+
+    fig_barras.update_layout(
+        barmode="group",
+        height=350,
+        xaxis_title="Mês",
+        yaxis_title="Valor (R$)",
+        legend_title="Legenda",
+    )
+    st.plotly_chart(fig_barras, use_container_width=True)
+
+    # ── Tabela resumo ─────────────────────────────────────────────────────────
+    st.markdown("### Resumo por Mês")
+
+    df_tabela = df_comp[["mes_ano", "total_empenhado", "total_liquidado"]].copy()
+
+    df_tabela["total_empenhado"] = df_tabela["total_empenhado"].apply(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    )
+    df_tabela["total_liquidado"] = df_tabela["total_liquidado"].apply(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    )
+    df_tabela.columns = ["Mês/Ano", "Total Empenhado", "Total Liquidado"]
+
+    st.dataframe(df_tabela, use_container_width=True, hide_index=True)
