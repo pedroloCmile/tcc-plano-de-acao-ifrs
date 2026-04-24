@@ -35,12 +35,10 @@ def identificar_linhas_dados(df: pd.DataFrame) -> pd.DataFrame:
     Esta função localiza onde os dados reais começam e
     retorna apenas as linhas de dados, já com colunas renomeadas.
     """
-    # No relatório de dezembro/2024, os dados começam na linha 6 (índice 6)
-    # e as colunas relevantes são 0, 1, 2, 3, 4, 5
-    df_dados = df.iloc[6:, :6].copy()
+    df_dados = df.iloc[4:, :6].copy()
     df_dados.columns = [
-        "nd_descricao",
         "nd_codigo",
+        "nd_descricao",
         "subitem",
         "subitem_descricao",
         "valor_empenhado",

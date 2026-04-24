@@ -73,6 +73,11 @@ MAPEAMENTO_ND = [
     {"nd": "339030", "subitem": "35", "objetivo": "O1", "categoria": "Funcionamento e Contratos"},
     {"nd": "339047", "subitem": "8",  "objetivo": "O1", "categoria": "Funcionamento e Contratos"},
 
+    # ── PROCESSOS — Novos subitens identificados em jan/fev 2026 ─────────────
+
+    {"nd": "339092", "subitem": "32", "objetivo": "P5", "categoria": "Assistência Estudantil"},
+    {"nd": "339093", "subitem": "14", "objetivo": "PC3", "categoria": "Capacitação e Desenvolvimento"},
+
     # ── ORÇAMENTO — Restos a Pagar ────────────────────────────────────────────
 
     {"nd": "339092", "subitem": "39", "objetivo": "O3", "categoria": "Restos a Pagar / Ajustes"},
