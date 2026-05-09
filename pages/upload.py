@@ -127,7 +127,7 @@ try:
         col5.markdown("**Não mapeadas**")
         col6.markdown("**Excluir**")
 
-        for _, row in df_log.iterrows():
+        for idx, (_, row) in enumerate(df_log.iterrows()):
             col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 2, 1])
             col1.write(row["nome_arquivo"])
             col2.write(row["mes"])
@@ -135,7 +135,7 @@ try:
             col4.write(f"{row['total_linhas']} linhas")
             col5.write(f"{row['nao_mapeadas']} não mapeadas")
 
-            if col6.button("🗑️", key=f"del_{row['mes']}_{row['ano']}"):
+            if col6.button("🗑️", key=f"del_{idx}_{row['mes']}_{row['ano']}"):
                 with st.spinner(f"Excluindo {row['mes']}/{row['ano']}..."):
                     try:
                         excluir_dados_mes(str(row["mes"]), str(row["ano"]))
