@@ -13,12 +13,16 @@ st.markdown("---")
 
 st.info("As informações abaixo refletem o Plano de Ação 2026 fixado no sistema. Para anos futuros, consulte o administrador do sistema.")
 
-# ── Dados do plano ────────────────────────────────────────────────────────────
-
 ANO = 2026
 perspectivas = get_perspectivas(ANO)
 
-# ── Exibição por perspectiva ──────────────────────────────────────────────────
+def fmt_valor(x):
+    return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if x > 0 else "—"
+
+def fmt_meta(x):
+    if isinstance(x, float) and x < 10:
+        return f"{x * 100:.1f}%"
+    return str(x)
 
 for nome_perspectiva, dados_perspectiva in perspectivas.items():
 
@@ -29,33 +33,32 @@ for nome_perspectiva, dados_perspectiva in perspectivas.items():
 
     for cod_obj, dados_obj in objetivos.items():
 
-        # Indicadores do objetivo
-        for cod_ind, dados_ind in dados_obj["indicadores"].items():
+        indicadores = dados_obj["indicadores"]
+
+        if indicadores:
+            # Objetivo com indicadores — uma linha por indicador
+            for cod_ind, dados_ind in indicadores.items():
+                linhas.append({
+                    "Objetivo":         cod_obj,
+                    "Descrição":        dados_obj["descricao"],
+                    "Indicador":        cod_ind,
+                    "Meta":             dados_ind["descricao"],
+                    "Valor da Meta":    fmt_meta(dados_ind["meta"]),
+                    "Valor Orçado (R$)": fmt_valor(dados_obj["valor_orcado"]),
+                })
+        else:
+            # Objetivo sem indicadores — uma linha só com o objetivo
             linhas.append({
-                "Objetivo":        cod_obj,
-                "Descrição":       dados_obj["descricao"],
-                "Indicador":       cod_ind,
-                "Meta":            dados_ind["descricao"],
-                "Valor da Meta":   dados_ind["meta"],
-                "Valor Orçado (R$)": dados_obj["valor_orcado"],
+                "Objetivo":         cod_obj,
+                "Descrição":        dados_obj["descricao"],
+                "Indicador":        "—",
+                "Meta":             "—",
+                "Valor da Meta":    "—",
+                "Valor Orçado (R$)": fmt_valor(dados_obj["valor_orcado"]),
             })
 
-    df = pd.DataFrame(linhas)
-
-    # Formata valor orçado
-    df["Valor Orçado (R$)"] = df["Valor Orçado (R$)"].apply(
-        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if x > 0 else "—"
-    )
-
-    # Formata valor da meta
-    df["Valor da Meta"] = df["Valor da Meta"].apply(
-        lambda x: f"{x * 100:.1f}%" if isinstance(x, float) and x < 10 else str(x)
-    )
-
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-    )
+    if linhas:
+        df = pd.DataFrame(linhas)
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
     st.markdown("---")

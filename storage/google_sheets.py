@@ -49,33 +49,29 @@ def salvar_dados_processados(df: pd.DataFrame, mes: str, ano: int) -> None:
 
     # Carrega dados existentes
     dados_existentes = aba.get_all_records()
-    print(f"Linhas existentes: {len(dados_existentes)}")
 
     # Prepara novo df para salvar
     df_export = df.copy()
     df_export["valor_empenhado"] = df_export["valor_empenhado"].apply(lambda x: str(round(float(x), 2)))
     df_export["valor_liquidado"] = df_export["valor_liquidado"].apply(lambda x: str(round(float(x), 2)))
+    df_export["valor_pago"]      = df_export["valor_pago"].apply(lambda x: str(round(float(x), 2)))
 
     if dados_existentes:
         df_existente = pd.DataFrame(dados_existentes)
-        print(f"Meses existentes: {df_existente['mes'].unique() if 'mes' in df_existente.columns else 'sem coluna mes'}")
 
         # Remove registros do mesmo mês e ano para evitar duplicata
         df_existente = df_existente[
             ~((df_existente["mes"] == mes) & (df_existente["ano"].astype(str) == str(ano)))
         ]
-        print(f"Linhas após remover {mes}/{ano}: {len(df_existente)}")
 
         df_final = pd.concat([df_existente, df_export], ignore_index=True)
     else:
-        print("Sheets vazio — primeiro upload")
         df_final = df_export
-
-    print(f"Total final a salvar: {len(df_final)}")
 
     # Reescreve tudo
     aba.clear()
     aba.update([df_final.columns.tolist()] + df_final.values.tolist())
+
 
 def salvar_log_upload(nome_arquivo: str, mes: str, ano: int, total_linhas: int, nao_mapeadas: int) -> None:
     """
@@ -116,18 +112,102 @@ def carregar_dados_processados() -> pd.DataFrame:
     df["valor_empenhado"] = pd.to_numeric(df["valor_empenhado"], errors="coerce").fillna(0)
     df["valor_liquidado"] = pd.to_numeric(df["valor_liquidado"], errors="coerce").fillna(0)
 
+    # valor_pago pode não existir em registros antigos
+    if "valor_pago" in df.columns:
+        df["valor_pago"] = pd.to_numeric(df["valor_pago"], errors="coerce").fillna(0)
+    else:
+        df["valor_pago"] = 0
+
     return df
 
 
 def carregar_log_uploads() -> pd.DataFrame:
     """
     Lê o histórico de uploads realizados.
+    Garante o cabeçalho mesmo que tenha sido apagado acidentalmente.
     """
-    sh    = conectar()
-    aba   = sh.worksheet(ABA_UPLOADS_LOG)
+    CABECALHO = ["nome_arquivo", "mes", "ano", "total_linhas", "nao_mapeadas"]
+
+    try:
+        sh    = conectar()
+        aba   = sh.worksheet(ABA_UPLOADS_LOG)
+        dados = aba.get_all_values()
+
+        # Aba completamente vazia
+        if not dados:
+            aba.append_row(CABECALHO)
+            return pd.DataFrame(columns=CABECALHO)
+
+        primeira_linha = [str(v).strip().lower() for v in dados[0]]
+
+        # Cabeçalho presente
+        if "nome_arquivo" in primeira_linha:
+            registros = [r for r in dados[1:] if any(str(v).strip() for v in r)]
+            if not registros:
+                return pd.DataFrame(columns=CABECALHO)
+            df = pd.DataFrame(registros)
+            # Garante que tem exatamente 5 colunas
+            if len(df.columns) >= 5:
+                df = df.iloc[:, :5]
+                df.columns = CABECALHO
+            return df
+
+        # Cabeçalho foi apagado — reinsere
+        aba.insert_row(CABECALHO, index=1)
+        registros = [r for r in dados if any(str(v).strip() for v in r)]
+        if not registros:
+            return pd.DataFrame(columns=CABECALHO)
+        df = pd.DataFrame(registros)
+        if len(df.columns) >= 5:
+            df = df.iloc[:, :5]
+            df.columns = CABECALHO
+        return df
+
+    except Exception as e:
+        return pd.DataFrame(columns=CABECALHO)
+    
+def excluir_dados_mes(mes: str, ano: int) -> None:
+    """
+    Remove todos os registros de um mês/ano específico
+    da aba dados_processados.
+    """
+    sh  = conectar()
+    aba = sh.worksheet(ABA_DADOS)
+
     dados = aba.get_all_records()
-
     if not dados:
-        return pd.DataFrame()
+        return
 
-    return pd.DataFrame(dados)
+    df = pd.DataFrame(dados)
+    df = df[~((df["mes"] == mes) & (df["ano"].astype(str) == str(ano)))]
+
+    aba.clear()
+    if not df.empty:
+        aba.update([df.columns.tolist()] + df.values.tolist())
+
+
+def excluir_log_upload(mes: str, ano: int) -> None:
+    """
+    Remove o registro de um mês/ano específico
+    da aba uploads_log.
+    """
+    CABECALHO = ["nome_arquivo", "mes", "ano", "total_linhas", "nao_mapeadas"]
+
+    sh  = conectar()
+    aba = sh.worksheet(ABA_UPLOADS_LOG)
+
+    dados = aba.get_all_values()
+    if not dados:
+        return
+
+    # Mantém cabeçalho e filtra as linhas do mês/ano
+    cabecalho = dados[0]
+    registros = [
+        r for r in dados[1:]
+        if not (len(r) >= 3 and str(r[1]).strip() == mes and str(r[2]).strip() == str(ano))
+    ]
+
+    aba.clear()
+    aba.append_row(cabecalho)
+    for r in registros:
+        aba.append_row(r)

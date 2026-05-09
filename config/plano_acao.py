@@ -79,7 +79,7 @@ PLANO_2026 = {
                     "indicadores": {
                         "P5.1": {"descricao": "Percentual de oferta de vagas ao público de ações afirmativas", "meta": 0.50}
                     },
-                    "valor_orcado": 288504.32
+                    "valor_orcado": 270504.32
                 },
                 "P6": {
                     "descricao": "Fomentar a política de segurança alimentar e nutricional",
@@ -112,7 +112,7 @@ PLANO_2026 = {
                     "indicadores": {
                         "PC3.1": {"descricao": "Percentual de servidores que participaram de ações de desenvolvimento", "meta": 0.32}
                     },
-                    "valor_orcado": 83797.85
+                    "valor_orcado": 0
                 },
                 "PC4": {
                     "descricao": "Promover e incentivar a qualidade de vida dos servidores",
@@ -132,7 +132,7 @@ PLANO_2026 = {
                         "O1.1": {"descricao": "Percentual de investimento em infraestrutura", "meta": 0.036},
                         "O1.2": {"descricao": "Percentual de satisfação sobre a infraestrutura oferecida", "meta": 0.86},
                     },
-                    "valor_orcado": 1205710.62
+                    "valor_orcado": 971710.62
                 },
                 "O2": {
                     "descricao": "Ampliar captação de recursos extraorçamentários",
@@ -148,6 +148,21 @@ PLANO_2026 = {
                         "O3.2": {"descricao": "Percentual empenhado em água e luz por pessoa vs. ano anterior", "meta": 0.95},
                     },
                     "valor_orcado": 0
+                },
+            }
+        },
+
+        "Programa Orçamentário": {
+            "objetivos": {
+                "RC": {
+                    "descricao": "Resolução CONSUP — Bolsas, auxílios e capacitação institucional",
+                    "indicadores": {},
+                    "valor_orcado": 315079.92
+                },
+                "FUNC": {
+                    "descricao": "Funcionamento — Manutenção e operação do campus",
+                    "indicadores": {},
+                    "valor_orcado": 1526619.14
                 },
             }
         },

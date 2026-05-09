@@ -3,6 +3,19 @@
 # Toda vez que o sistema precisar de dados do plano, passa por aqui.
 # Nunca acesse config/plano_acao.py diretamente nas outras partes do sistema.
 #
+# =============================================================================
+# 
+# FLUXO ENTRE get_plano E mapeamento.py:
+# relatório: ND 339018, subitem 1
+#          ↓
+#  get_mapeamento_por_nd("339018", "1")
+#          ↓ -- descobre que é objetivo "R2"
+#  get_objetivo(2026, "R2")
+#          ↓ -- descobre que R2 tem meta 10% e orçamento R$21.000
+#  indicadores.py calcula o % de 
+#
+# =============================================================================
+#
 # IMPLEMENTAÇÃO FUTURA: quando houver suporte a múltiplos anos,
 # esta função será o único lugar a ser modificado — ela passará a
 # ler o arquivo do plano enviado pelo setor em vez de retornar dados fixos.

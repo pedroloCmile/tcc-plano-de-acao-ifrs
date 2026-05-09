@@ -18,19 +18,17 @@ from core.get_plano import (
 
 def calcular_execucao_por_objetivo(df: pd.DataFrame, ano: int) -> pd.DataFrame:
     """
-    Agrupa os valores empenhados e liquidados por objetivo estratégico.
+    Agrupa os valores empenhados, liquidados e pagos por objetivo estratégico.
     Cruza com o valor orçado do plano e calcula o percentual de execução.
     """
-    # Remove linhas não mapeadas
     df_mapeado = df[df["objetivo"] != "Não mapeado"].copy()
 
-    # Agrupa por objetivo
     agrupado = df_mapeado.groupby("objetivo").agg(
         total_empenhado=("valor_empenhado", "sum"),
         total_liquidado=("valor_liquidado", "sum"),
+        total_pago     =("valor_pago",      "sum"),
     ).reset_index()
 
-    # Adiciona valor orçado e percentual de execução
     valores_orcados   = []
     percentual_empenh = []
     percentual_liquid = []
@@ -56,10 +54,10 @@ def calcular_execucao_por_objetivo(df: pd.DataFrame, ano: int) -> pd.DataFrame:
             percentual_empenh.append(None)
             percentual_liquid.append(None)
 
-    agrupado["descricao"]          = descricoes
-    agrupado["valor_orcado"]       = valores_orcados
-    agrupado["perc_empenhado"]     = percentual_empenh
-    agrupado["perc_liquidado"]     = percentual_liquid
+    agrupado["descricao"]      = descricoes
+    agrupado["valor_orcado"]   = valores_orcados
+    agrupado["perc_empenhado"] = percentual_empenh
+    agrupado["perc_liquidado"] = percentual_liquid
 
     return agrupado
 
@@ -68,13 +66,14 @@ def calcular_execucao_por_objetivo(df: pd.DataFrame, ano: int) -> pd.DataFrame:
 
 def calcular_execucao_por_categoria(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Agrupa os valores empenhados e liquidados por categoria agregada.
+    Agrupa os valores por categoria agregada.
     """
     df_mapeado = df[df["categoria"] != "Não mapeado"].copy()
 
     agrupado = df_mapeado.groupby("categoria").agg(
         total_empenhado=("valor_empenhado", "sum"),
         total_liquidado=("valor_liquidado", "sum"),
+        total_pago     =("valor_pago",      "sum"),
     ).reset_index()
 
     agrupado = agrupado.sort_values("total_empenhado", ascending=False)
@@ -90,7 +89,6 @@ def calcular_execucao_por_perspectiva(df: pd.DataFrame, ano: int) -> pd.DataFram
     """
     perspectivas = get_perspectivas(ano)
 
-    # Monta dicionário objetivo → perspectiva
     obj_para_perspectiva = {}
     for nome_persp, dados_persp in perspectivas.items():
         for cod_obj in dados_persp["objetivos"]:
@@ -102,7 +100,48 @@ def calcular_execucao_por_perspectiva(df: pd.DataFrame, ano: int) -> pd.DataFram
     agrupado = df_mapeado.groupby("perspectiva").agg(
         total_empenhado=("valor_empenhado", "sum"),
         total_liquidado=("valor_liquidado", "sum"),
+        total_pago     =("valor_pago",      "sum"),
     ).reset_index()
+
+    return agrupado
+
+
+# ── Execução por Ação ─────────────────────────────────────────────────────────
+
+def calcular_execucao_por_acao(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Agrupa os valores por ação (extraída do PI).
+    É o nível mais alto de agrupamento do sistema.
+    """
+    df_mapeado = df[df["acao_desc"] != "Não identificado"].copy()
+
+    agrupado = df_mapeado.groupby(["acao_cod", "acao_desc"]).agg(
+        total_empenhado=("valor_empenhado", "sum"),
+        total_liquidado=("valor_liquidado", "sum"),
+        total_pago     =("valor_pago",      "sum"),
+    ).reset_index()
+
+    agrupado = agrupado.sort_values("total_empenhado", ascending=False)
+
+    return agrupado
+
+
+# ── Execução por Categoria de Apropriação ────────────────────────────────────
+
+def calcular_execucao_por_categoria_pi(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Agrupa os valores por categoria de apropriação do PI.
+    Nível intermediário entre ação e objetivo.
+    """
+    df_valido = df[df["categoria_desc"] != "Não identificado"].copy()
+
+    agrupado = df_valido.groupby(["categoria_cod", "categoria_desc"]).agg(
+        total_empenhado=("valor_empenhado", "sum"),
+        total_liquidado=("valor_liquidado", "sum"),
+        total_pago     =("valor_pago",      "sum"),
+    ).reset_index()
+
+    agrupado = agrupado.sort_values("total_empenhado", ascending=False)
 
     return agrupado
 
@@ -111,15 +150,15 @@ def calcular_execucao_por_perspectiva(df: pd.DataFrame, ano: int) -> pd.DataFram
 
 def calcular_resumo_geral(df: pd.DataFrame, ano: int) -> dict:
     """
-    Retorna um dicionário com os números gerais do relatório.
-    Usado para os cards de resumo no topo do dashboard.
+    Retorna os números gerais do relatório para os cards do dashboard.
     """
-    total_empenhado = df["valor_empenhado"].sum()
-    total_liquidado = df["valor_liquidado"].sum()
-    total_linhas    = len(df)
-    nao_mapeadas    = len(df[df["objetivo"] == "Não mapeado"])
+    total_empenhado  = df["valor_empenhado"].sum()
+    total_liquidado  = df["valor_liquidado"].sum()
+    total_pago       = df["valor_pago"].sum() if "valor_pago" in df.columns else 0
+    total_linhas     = len(df)
+    nao_mapeadas     = len(df[df["objetivo"] == "Não mapeado"])
+    total_acoes      = df["acao_cod"].nunique() if "acao_cod" in df.columns else 0
 
-    # Total orçado — soma de todos os objetivos do plano
     plano = get_plano(ano)
     total_orcado = sum(
         obj["valor_orcado"]
@@ -133,9 +172,11 @@ def calcular_resumo_geral(df: pd.DataFrame, ano: int) -> dict:
         "total_orcado":    total_orcado,
         "total_empenhado": total_empenhado,
         "total_liquidado": total_liquidado,
+        "total_pago":      total_pago,
         "perc_execucao":   perc_execucao,
         "total_linhas":    total_linhas,
         "nao_mapeadas":    nao_mapeadas,
+        "total_acoes":     total_acoes,
     }
 
 
@@ -153,11 +194,11 @@ def calcular_indicador_ti(df: pd.DataFrame, ano: int) -> dict:
     meta           = get_meta_indicador(ano, "P4", "P4.1") * 100
 
     return {
-        "indicador":    "P4.1",
-        "descricao":    "% execução orçamentária em TI",
-        "meta":         meta,
-        "realizado":    perc_realizado,
-        "atingido":     perc_realizado >= meta,
+        "indicador": "P4.1",
+        "descricao": "% execução orçamentária em TI",
+        "meta":      meta,
+        "realizado": perc_realizado,
+        "atingido":  perc_realizado >= meta,
     }
 
 
@@ -173,11 +214,11 @@ def calcular_indicador_alimentacao(df: pd.DataFrame, ano: int) -> dict:
     meta           = get_meta_indicador(ano, "P6", "P6.1") * 100
 
     return {
-        "indicador":    "P6.1",
-        "descricao":    "% execução orçamentária em alimentos",
-        "meta":         meta,
-        "realizado":    perc_realizado,
-        "atingido":     perc_realizado >= meta,
+        "indicador": "P6.1",
+        "descricao": "% execução orçamentária em alimentos",
+        "meta":      meta,
+        "realizado": perc_realizado,
+        "atingido":  perc_realizado >= meta,
     }
 
 
@@ -193,18 +234,28 @@ def calcular_indicador_infraestrutura(df: pd.DataFrame, ano: int) -> dict:
     meta           = get_meta_indicador(ano, "O1", "O1.1") * 100
 
     return {
-        "indicador":    "O1.1",
-        "descricao":    "% investimento em infraestrutura",
-        "meta":         meta,
-        "realizado":    perc_realizado,
-        "atingido":     perc_realizado >= meta,
+        "indicador": "O1.1",
+        "descricao": "% investimento em infraestrutura",
+        "meta":      meta,
+        "realizado": perc_realizado,
+        "atingido":  perc_realizado >= meta,
     }
 
 
 def calcular_todos_indicadores(df: pd.DataFrame, ano: int) -> list:
     """
     Executa todos os indicadores calculáveis a partir do relatório mensal.
-    Retorna uma lista de dicionários — um por indicador.
+    """
+    return [
+        calcular_indicador_ti(ano=ano, df=df),
+        calcular_indicador_alimentacao(ano=ano, df=df),
+        calcular_indicador_infraestrutura(ano=ano, df=df),
+    ]
+
+
+def calcular_todos_indicadores(df: pd.DataFrame, ano: int) -> list:
+    """
+    Executa todos os indicadores calculáveis a partir do relatório mensal.
     """
     return [
         calcular_indicador_ti(ano=ano, df=df),
