@@ -30,11 +30,33 @@ ABA_CONFIG      = "config"
 def conectar() -> gspread.Spreadsheet:
     """
     Autentica com a API do Google e retorna o objeto da planilha.
+    Funciona tanto localmente (arquivo .json) quanto no Streamlit Cloud (Secrets).
     """
+    import os
+
+    # Streamlit Cloud — lê das Secrets
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "gcp_service_account" in st.secrets:
+            creds = Credentials.from_service_account_info(
+                dict(st.secrets["gcp_service_account"]),
+                scopes=SCOPES,
+            )
+            client = gspread.authorize(creds)
+            return client.open_by_key(SPREADSHEET_ID)
+    except Exception:
+        pass
+
+    # Local — lê do arquivo .json
+    if not os.path.exists(CREDENTIALS_FILE):
+        raise FileNotFoundError(
+            f"Arquivo de credenciais '{CREDENTIALS_FILE}' não encontrado. "
+            "Configure os Secrets no Streamlit Cloud ou adicione o arquivo localmente."
+        )
+
     creds  = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     client = gspread.authorize(creds)
     return client.open_by_key(SPREADSHEET_ID)
-
 
 # ── Escrita ───────────────────────────────────────────────────────────────────
 
