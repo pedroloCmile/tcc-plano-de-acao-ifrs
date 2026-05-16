@@ -69,7 +69,7 @@ def get_meta_indicador(ano: int, cod_objetivo: str, cod_indicador: str) -> float
 
     indicadores = objetivo["indicadores"]
     if cod_indicador not in indicadores:
-        raise ValueError(f"Indicador '{cod_indicador}' não encontrado no objetivo '{cod_objetivo}'.")
+        raise ValueError(f"Objetivo '{cod_objetivo}' não possui indicadores definidos.")
 
     return indicadores[cod_indicador]["meta"]
 
@@ -77,6 +77,6 @@ def get_meta_indicador(ano: int, cod_objetivo: str, cod_indicador: str) -> float
 def get_valor_orcado(ano: int, cod_objetivo: str) -> float:
     """
     Retorna o valor orçado para um objetivo específico.
-    Exemplo: get_valor_orcado(2026, "P5") → 288504.32
+    Exemplo: get_valor_orcado(2026, "P5") → 270504.32
     """
     return get_objetivo(ano, cod_objetivo)["valor_orcado"]

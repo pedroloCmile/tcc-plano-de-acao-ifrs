@@ -72,7 +72,7 @@ PLANO_2026 = {
                         "P4.1": {"descricao": "Percentual da execução orçamentária em despesas de TI", "meta": 0.007},
                         "P4.2": {"descricao": "Percentual de acessos à página institucional", "meta": 0.015},
                     },
-                    "valor_orcado": 162000.00
+                    "valor_orcado": 162000.00 # soma somente os orçamentos, não os 'extra'
                 },
                 "P5": {
                     "descricao": "Fortalecer núcleos de ações afirmativas e assistência estudantil",

@@ -182,83 +182,81 @@ def calcular_resumo_geral(df: pd.DataFrame, ano: int) -> dict:
 
 # ── Indicadores Específicos do Plano ─────────────────────────────────────────
 
-def calcular_indicador_ti(df: pd.DataFrame, ano: int) -> dict:
+def calcular_indicador_ti(df_mes: pd.DataFrame, df_acumulado: pd.DataFrame, ano: int) -> dict:
     """
-    P4.1 — Percentual da execução orçamentária em despesas de TI.
-    Meta: 0,70% do total empenhado.
+    P4.1 — % execução orçamentária em TI.
+    Calcula sobre o acumulado do ano.
     """
-    total_empenhado = df["valor_empenhado"].sum()
-    ti = df[df["categoria"] == "Tecnologia da Informação"]["valor_empenhado"].sum()
+    total_acumulado = df_acumulado["valor_empenhado"].sum()
+    ti_acumulado    = df_acumulado[df_acumulado["categoria"] == "Tecnologia da Informação"]["valor_empenhado"].sum()
 
-    perc_realizado = round(ti / total_empenhado * 100, 4) if total_empenhado > 0 else 0
+    perc_realizado = round(ti_acumulado / total_acumulado * 100, 4) if total_acumulado > 0 else 0
     meta           = get_meta_indicador(ano, "P4", "P4.1") * 100
+    falta          = round(meta - perc_realizado, 4)
 
     return {
-        "indicador": "P4.1",
-        "descricao": "% execução orçamentária em TI",
-        "meta":      meta,
-        "realizado": perc_realizado,
-        "atingido":  perc_realizado >= meta,
+        "indicador":   "P4.1",
+        "descricao":   "% execução orçamentária em TI",
+        "meta":        meta,
+        "realizado":   perc_realizado,
+        "falta":       max(falta, 0),
+        "atingido":    perc_realizado >= meta,
+        "base":        "acumulado",
     }
 
 
-def calcular_indicador_alimentacao(df: pd.DataFrame, ano: int) -> dict:
+def calcular_indicador_alimentacao(df_mes: pd.DataFrame, df_acumulado: pd.DataFrame, ano: int) -> dict:
     """
-    P6.1 — Percentual da execução orçamentária em despesas de alimentos.
-    Meta: 3% do total empenhado.
+    P6.1 — % execução orçamentária em alimentos.
+    Calcula sobre o acumulado do ano.
     """
-    total_empenhado = df["valor_empenhado"].sum()
-    alim = df[df["categoria"] == "Alimentação"]["valor_empenhado"].sum()
+    total_acumulado = df_acumulado["valor_empenhado"].sum()
+    alim_acumulado  = df_acumulado[df_acumulado["categoria"] == "Alimentação"]["valor_empenhado"].sum()
 
-    perc_realizado = round(alim / total_empenhado * 100, 4) if total_empenhado > 0 else 0
+    perc_realizado = round(alim_acumulado / total_acumulado * 100, 4) if total_acumulado > 0 else 0
     meta           = get_meta_indicador(ano, "P6", "P6.1") * 100
+    falta          = round(meta - perc_realizado, 4)
 
     return {
-        "indicador": "P6.1",
-        "descricao": "% execução orçamentária em alimentos",
-        "meta":      meta,
-        "realizado": perc_realizado,
-        "atingido":  perc_realizado >= meta,
+        "indicador":   "P6.1",
+        "descricao":   "% execução orçamentária em alimentos",
+        "meta":        meta,
+        "realizado":   perc_realizado,
+        "falta":       max(falta, 0),
+        "atingido":    perc_realizado >= meta,
+        "base":        "acumulado",
     }
 
 
-def calcular_indicador_infraestrutura(df: pd.DataFrame, ano: int) -> dict:
+def calcular_indicador_infraestrutura(df_mes: pd.DataFrame, df_acumulado: pd.DataFrame, ano: int) -> dict:
     """
-    O1.1 — Percentual de investimento em infraestrutura.
-    Meta: 3,60% do total empenhado.
+    O1.1 — % investimento em infraestrutura.
+    Calcula sobre o acumulado do ano.
     """
-    total_empenhado = df["valor_empenhado"].sum()
-    infra = df[df["categoria"] == "Infraestrutura e Manutenção"]["valor_empenhado"].sum()
+    total_acumulado = df_acumulado["valor_empenhado"].sum()
+    infra_acumulado = df_acumulado[df_acumulado["categoria"] == "Infraestrutura e Manutenção"]["valor_empenhado"].sum()
 
-    perc_realizado = round(infra / total_empenhado * 100, 4) if total_empenhado > 0 else 0
+    perc_realizado = round(infra_acumulado / total_acumulado * 100, 4) if total_acumulado > 0 else 0
     meta           = get_meta_indicador(ano, "O1", "O1.1") * 100
+    falta          = round(meta - perc_realizado, 4)
 
     return {
-        "indicador": "O1.1",
-        "descricao": "% investimento em infraestrutura",
-        "meta":      meta,
-        "realizado": perc_realizado,
-        "atingido":  perc_realizado >= meta,
+        "indicador":   "O1.1",
+        "descricao":   "% investimento em infraestrutura",
+        "meta":        meta,
+        "realizado":   perc_realizado,
+        "falta":       max(falta, 0),
+        "atingido":    perc_realizado >= meta,
+        "base":        "acumulado",
     }
 
 
-def calcular_todos_indicadores(df: pd.DataFrame, ano: int) -> list:
+def calcular_todos_indicadores(df_mes: pd.DataFrame, df_acumulado: pd.DataFrame, ano: int) -> list:
     """
-    Executa todos os indicadores calculáveis a partir do relatório mensal.
-    """
-    return [
-        calcular_indicador_ti(ano=ano, df=df),
-        calcular_indicador_alimentacao(ano=ano, df=df),
-        calcular_indicador_infraestrutura(ano=ano, df=df),
-    ]
-
-
-def calcular_todos_indicadores(df: pd.DataFrame, ano: int) -> list:
-    """
-    Executa todos os indicadores calculáveis a partir do relatório mensal.
+    Executa todos os indicadores usando o acumulado do ano.
     """
     return [
-        calcular_indicador_ti(ano=ano, df=df),
-        calcular_indicador_alimentacao(ano=ano, df=df),
-        calcular_indicador_infraestrutura(ano=ano, df=df),
+        calcular_indicador_ti(df_mes, df_acumulado, ano),
+        calcular_indicador_alimentacao(df_mes, df_acumulado, ano),
+        calcular_indicador_infraestrutura(df_mes, df_acumulado, ano),
     ]

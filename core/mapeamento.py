@@ -18,6 +18,7 @@ MAPEAMENTO_PI_ND = [
     {"pi": "L20RGP3500I", "nd": "449052", "objetivo": "P4",  "categoria": "Tecnologia da Informação"},
     {"pi": "L20RLP3500I", "nd": "339040", "objetivo": "P4", "categoria": "Tecnologia da Informação"},
 
+
     # ── P5 — Assistência Estudantil ───────────────────────────────────────────
     {"pi": "L21IHP1900E", "nd": "339039", "objetivo": "P5",  "categoria": "Assistência Estudantil"},
     {"pi": "L2994P1900I", "nd": "339030", "objetivo": "P5",  "categoria": "Assistência Estudantil"},

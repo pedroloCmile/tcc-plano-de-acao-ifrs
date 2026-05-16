@@ -25,12 +25,7 @@ nav = st.navigation([inicio, upload, dashboard, configuracao])
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 import os
-if os.path.exists("assets/logo_ifrs.png"):
-    st.sidebar.image("assets/logo_ifrs.png", use_container_width=True)
-else:
-    st.sidebar.title("IFRS Farroupilha")
 
-st.sidebar.markdown("---")
 st.sidebar.caption("Sistema de Acompanhamento do Plano de Ação · 2026")
 
 # ── Execução ──────────────────────────────────────────────────────────────────
